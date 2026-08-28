@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE-MIT)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE-APACHE)
 
-Typed, composable HTTP error sets for [Axum](https://github.com/tokio-rs/axum) and [Aide](https://github.com/tamasfe/aide).
+Typed, composable HTTP error sets for [Axum](https://github.com/tokio-rs/axum), with OpenAPI generation through [Aide](https://github.com/tamasfe/aide) or [Utoipa](https://github.com/juhaku/utoipa)
 
 Instead of monolithic error enums or loosely-typed responses, functions declare the exact set of HTTP status codes they can return using type-level tuple sets (e.g., `(NotFound, Unauthorized)`), powered by [`type-sets`](https://docs.rs/type-sets/).
 
@@ -52,7 +52,7 @@ fn update_user_profile(
     id: &str,
     token: &str,
     new_name: &str,
-) -> AppResultSet<String, (Unauthorized, Conflict, InternalServerError) NotFound> {
+) -> AppResultSet<String, (Unauthorized, Conflict, InternalServerError, NotFound)> {
     check_auth(token).into_superset()?;
     let mut username = fetch_user(id).into_superset()?;
 
