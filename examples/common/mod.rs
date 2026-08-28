@@ -1,27 +1,34 @@
 use axum::response::{IntoResponse, Response};
-use axum_error_sets::{AideApiErrorValue, ApiError, ApiErrorValue};
+use axum_error_sets::{AideErrorSetValue, ErrorSet, ErrorSetValue};
 use http::StatusCode;
+use rootcause::Report;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct AppError {
-    pub message: String,
+    pub message: Report,
 }
 
 impl AppError {
-    pub fn new(msg: impl Into<String>) -> Self {
+    pub fn new(msg: impl Into<Report>) -> Self {
         Self {
             message: msg.into(),
         }
     }
 }
 
-impl ApiErrorValue for AppError {
-    fn into_response_with(self, status: StatusCode) -> Response {
-        (status, self.message).into_response()
+impl<T: Into<Report>> From<T> for AppError {
+    fn from(value: T) -> Self {
+        Self::new(value)
     }
 }
 
-impl AideApiErrorValue for AppError {
+impl ErrorSetValue for AppError {
+    fn into_response_with(self, status: StatusCode) -> Response {
+        (status, format!("{}", self.message)).into_response()
+    }
+}
+
+impl AideErrorSetValue for AppError {
     type Inner = String;
 
     fn inferred_response_for(
@@ -36,5 +43,30 @@ impl AideApiErrorValue for AppError {
     }
 }
 
-/// Convenience alias for API results using CommonError
-pub type CommonApiResult<T, E> = Result<T, ApiError<AppError, E>>;
+pub type AppResultSet<T, E> = Result<T, ErrorSet<AppError, E>>;
+
+pub struct StringError {
+    pub message: String,
+}
+
+impl StringError {
+    pub fn new(msg: impl Into<String>) -> Self {
+        Self {
+            message: msg.into(),
+        }
+    }
+}
+
+impl std::error::Error for StringError {}
+
+impl std::fmt::Display for StringError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.message)
+    }
+}
+
+impl std::fmt::Debug for StringError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "StringError({})", self.message)
+    }
+}

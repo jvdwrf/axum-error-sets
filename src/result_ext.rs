@@ -1,4 +1,6 @@
-use crate::{ApiError, code::*};
+//! Contains all [`StatusWrapper`] types for the HTTP status codes defined in the `http` crate.
+
+use crate::{ErrorSet, code::*};
 use type_sets::SupersetOf;
 
 /// Extension trait for [`Result`] to convert it into a [`Result`] with an [`ApiError`].
@@ -92,22 +94,23 @@ impl<T, E> StatusResultExt for Result<T, E> {
     }
 }
 
-pub trait ApiResultExt {
+/// Extension trait for results, to convert errorsets into supersets.
+pub trait ResultSetExt {
     type Ok;
     type Err;
     type Value;
 
-    fn into_superset<E>(self) -> Result<Self::Ok, ApiError<Self::Value, E>>
+    fn into_superset<E>(self) -> Result<Self::Ok, ErrorSet<Self::Value, E>>
     where
         E: SupersetOf<Self::Err>;
 }
 
-impl<T, E, V> ApiResultExt for Result<T, ApiError<V, E>> {
+impl<T, E, V> ResultSetExt for Result<T, ErrorSet<V, E>> {
     type Ok = T;
     type Err = E;
     type Value = V;
 
-    fn into_superset<E2>(self) -> Result<T, ApiError<V, E2>>
+    fn into_superset<E2>(self) -> Result<T, ErrorSet<V, E2>>
     where
         E2: SupersetOf<E>,
     {

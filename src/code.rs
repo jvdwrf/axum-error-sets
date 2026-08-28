@@ -12,13 +12,13 @@ macro_rules! define_codes {
             #[derive(Debug, Clone, Copy)]
             pub struct $name<T = ()>(pub T);
 
-            impl<T, R, S> From<$name<R>> for ApiError<S, T>
+            impl<T, R, S> From<$name<R>> for ErrorSet<S, T>
             where
                 R: Into<S>,
                 T: Contains<$name>,
             {
                 fn from(err: $name<R>) -> Self {
-                    ApiError::new(err)
+                    ErrorSet::new(err)
                 }
             }
 

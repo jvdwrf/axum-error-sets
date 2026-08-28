@@ -28,14 +28,14 @@ impl<T: Into<Report>> From<T> for MyApiError {
     }
 }
 
-impl ApiErrorValue for MyApiError {
+impl ErrorSetValue for MyApiError {
     fn into_response_with(self, status: StatusCode) -> Response {
         let msg = self.msg.unwrap_or_else(|| "".to_string());
         (status, msg).into_response()
     }
 }
 
-impl AideApiErrorValue for MyApiError {
+impl AideErrorSetValue for MyApiError {
     type Inner = String;
 
     fn inferred_response_for(
@@ -50,7 +50,7 @@ impl AideApiErrorValue for MyApiError {
     }
 }
 
-type ApiResult<T, E> = Result<T, ApiError<MyApiError, E>>;
+type ApiResult<T, E> = Result<T, ErrorSet<MyApiError, E>>;
 
 #[api_route(GET "/test")]
 #[axum::debug_handler]
@@ -65,7 +65,7 @@ async fn test() -> ApiResult<(), (NotFound, InternalServerError)> {
     Err(NotFound(MyApiError::new("Not found")))?;
     // Err(Conflict(MyApiError::from_msg("Not found")))?;
 
-    Err(ApiError::new_with::<NotFound>(MyApiError::new("Not found")))?;
+    Err(ErrorSet::new_with::<NotFound>(MyApiError::new("Not found")))?;
     // Err(ApiError::new::<Conflict>(MyApiError::from_msg("Not found")))?;
 
     Ok(())

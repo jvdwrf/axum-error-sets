@@ -2,9 +2,9 @@ use axum::{
     Json,
     response::{IntoResponse as _, Response},
 };
-use axum_error_sets::{AideApiErrorValue, ApiError, ApiErrorValue, StatusResultExt as _};
+use axum_error_sets::{AideErrorSetValue, ErrorSet, ErrorSetValue, StatusResultExt as _};
 use axum_error_sets::{
-    ApiResultExt as _,
+    ResultSetExt as _,
     code::{Conflict, InternalServerError, NotFound, Unauthorized},
 };
 use axum_typed_routing::api_route;
@@ -38,14 +38,14 @@ impl<T: Into<Report>> From<T> for AppError {
     }
 }
 
-impl ApiErrorValue for AppError {
+impl ErrorSetValue for AppError {
     fn into_response_with(self, status: StatusCode) -> Response {
         let message = self.message.unwrap_or_default();
         (status, message).into_response()
     }
 }
 
-impl AideApiErrorValue for AppError {
+impl AideErrorSetValue for AppError {
     type Inner = String;
 
     fn inferred_response_for(
@@ -60,7 +60,7 @@ impl AideApiErrorValue for AppError {
     }
 }
 
-type ApiResult<T, E> = Result<T, ApiError<AppError, E>>;
+type ApiResult<T, E> = Result<T, ErrorSet<AppError, E>>;
 
 // =============================================================================
 // The important part: error sets grow as they move up the application.
@@ -70,7 +70,7 @@ type ApiResult<T, E> = Result<T, ApiError<AppError, E>>;
 ///
 /// This is the smallest error set in the example.
 fn find_user() -> ApiResult<User, (NotFound,)> {
-    Err(ApiError::new_with::<NotFound>(AppError::new(
+    Err(ErrorSet::new_with::<NotFound>(AppError::new(
         "user not found",
     )))
 }

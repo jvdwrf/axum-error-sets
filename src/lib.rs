@@ -1,3 +1,56 @@
+//! Typed, composable HTTP error sets for Axum and Aide.
+//!
+//! `axum-error-sets` provides compile-time guarantees for HTTP error handling in Axum applications.
+//! Instead of using monolithic error enums or loosely-typed responses, functions declare the exact set
+//! of HTTP status codes they can return using type-level tuple sets (e.g., `(NotFound, Unauthorized)`).
+//!
+//! ### Key Concepts & Features
+//!
+//! * **Powered by [`type-sets`](https://docs.rs/type-sets/):** Uses type-level set operations under the hood to manage,
+//!   contain, and convert tuple sets of status codes at compile time.
+//! * **No Per-Function Custom Error Enums:** Eliminates the need to construct large, domain-wide error enums or
+//!   define bespoke `Error` types for every function layer.
+//! * **Exact Error Contracts:** Functions declare precisely which HTTP status codes they can produce in their return signature.
+//! * **Subset-to-Superset Promotion:** Error sets grow deterministically as they move up application layers
+//!   via `.into_superset()`. Lower-level code remains precise without restricting higher-level callers.
+//! * **Custom Response Formatting:** Implement [`ErrorSetValue`] on your central error payload type (e.g., `AppError` or `StringError`)
+//!   to completely control how Axum converts error values into [`IntoResponse`](axum::response::IntoResponse) for any given status code.
+//! * **Compile-Time Guarantees:** Returning an undeclared status code produces a compiler error. Callers cannot silently "forget"
+//!   or shrink handled error sets without explicit conversion.
+//! * **Aide & OpenAPI Integration:** Implement [`AideErrorSetValue`] to automatically generate precise OpenAPI metadata for every status code in an error set.
+//!
+//! ---
+//!
+//! For complete runnable code, visit the [`examples/`](https://github.com/your-org/axum-error-sets/tree/main/examples) directory on GitHub.
+//!
+//! ### Example 1: Basic Status Mapping
+//!
+//! Demonstrates converting `Result` types directly into typed HTTP error statuses using `StatusResultExt`.
+//!
+//! ```rust,ignore
+#![doc = include_str!("../examples/01_status_mapping.rs")]
+//! ```
+//!
+//! ---
+//!
+//! ### Example 2: Error Set Composition
+//!
+//! Demonstrates how lower-level functions with small error sets transparently expand into larger caller-level contracts using `into_superset()`.
+//!
+//! ```rust,ignore
+#![doc = include_str!("../examples/02_error_composition.rs")]
+//! ```
+//!
+//! ---
+//!
+//! ### Example 3: Axum Route Handlers & Aide OpenAPI Integration
+//!
+//! Demonstrates integrating error sets directly into Axum handlers to automatically generate OpenAPI metadata.
+//!
+//! ```rust,ignore
+#![doc = include_str!("../examples/03_axum_aide.rs")]
+//! ```
+
 use axum_core::response::Response;
 use http::StatusCode;
 use type_sets::Contains;
@@ -6,7 +59,7 @@ use type_sets::Contains;
 ///
 /// implemented for [`NotFound`](crate::code::NotFound),
 /// [`InternalServerError`](crate::code::InternalServerError), etc.
-pub trait StatusWrapper {
+pub trait StatusWrapper: Sized {
     /// The status code associated with type.
     const STATUS_CODE: StatusCode;
 
@@ -18,10 +71,20 @@ pub trait StatusWrapper {
 
     /// Convert this status wrapper into its inner value.
     fn into_inner(self) -> Self::Inner;
+
+    /// Convert this status wrapper into an [`ErrorSet`] with the
+    /// given inner value type. (`into` can be used as well)
+    fn into_set<T, E>(self) -> ErrorSet<T, E>
+    where
+        E: Contains<Self::Pure>,
+        Self::Inner: Into<T>,
+    {
+        ErrorSet::new(self)
+    }
 }
 
 /// Should be implemented for a type to be used as `T` inside [`ApiError<T, _>`].
-pub trait ApiErrorValue {
+pub trait ErrorSetValue {
     /// Convert the value into an axum [`Response`] with the given status code.
     ///
     /// This method must make sure that the response is valid for the given status code,
@@ -30,13 +93,13 @@ pub trait ApiErrorValue {
     ///
     /// # Example
     /// ```rust
-    /// use axum_error_sets::{ApiErrorValue};
+    /// use axum_error_sets::{ErrorSetValue};
     /// use axum::response::{IntoResponse, Response};
     /// use http::StatusCode;
     ///
     /// struct MyErrorValue(String);
     ///
-    /// impl ApiErrorValue for MyErrorValue {
+    /// impl ErrorSetValue for MyErrorValue {
     ///     fn into_response_with(self, status: StatusCode) -> Response {
     ///         (status, self.0).into_response()
     ///    }
@@ -48,7 +111,7 @@ pub trait ApiErrorValue {
 /// Should be implemented for a type to be used as `T` inside [`ApiError<T, _>`], for
 /// usage with [`aide`].
 #[cfg(feature = "aide")]
-pub trait AideApiErrorValue: ApiErrorValue {
+pub trait AideErrorSetValue: ErrorSetValue {
     /// See [`aide::OperationOutput::Inner`].
     type Inner;
 
@@ -56,19 +119,19 @@ pub trait AideApiErrorValue: ApiErrorValue {
     ///
     /// # Example
     /// ```rust
-    /// use axum_error_sets::{ApiErrorValue, AideApiErrorValue};
+    /// use axum_error_sets::{ErrorSetValue, AideErrorSetValue};
     /// use axum::response::{IntoResponse, Response};
     /// use http::StatusCode;
     ///
     /// struct MyErrorValue(String);
     ///
-    /// impl ApiErrorValue for MyErrorValue {
+    /// impl ErrorSetValue for MyErrorValue {
     ///     fn into_response_with(self, status: StatusCode) -> Response {
     ///         (status, self.0).into_response()
     ///    }
     /// }
     ///
-    /// impl AideApiErrorValue for MyErrorValue {
+    /// impl AideErrorSetValue for MyErrorValue {
     ///     type Inner = String;
     ///
     ///     fn inferred_response_for(
