@@ -2,6 +2,14 @@
 name = "axum-error-sets"
 version = "0.1.0"
 edition = "2024"
+license = "MIT OR Apache-2.0"
+license-file = "LICENSE-MIT"
+keywords = ["axum", "error-handling", "type-sets", "openapi", "aide"]
+categories = ["web-programming::http-server", "rust-patterns"]
+description = "Typed, composable HTTP error sets for Axum and Aide"
+homepage = "https://github.com/jvdwrf/axum-error-sets"
+repository = "https://github.com/jvdwrf/axum-error-sets"
+readme = "README.md"
 
 [dependencies]
 axum-core = "0.5"

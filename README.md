@@ -2,7 +2,6 @@
 
 [![Crates.io](https://img.shields.io/crates/v/axum-error-sets.svg)](https://crates.io/crates/axum-error-sets)
 [![Documentation](https://docs.rs/axum-error-sets/badge.svg)](https://docs.rs/axum-error-sets)
-[![CI](https://github.com/your-org/axum-error-sets/workflows/CI/badge.svg)](https://github.com/your-org/axum-error-sets/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE-MIT)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE-APACHE)
 
@@ -24,6 +23,8 @@ Instead of monolithic error enums or loosely-typed responses, functions declare 
 ---
 
 ## Quick Example
+
+For complete, runnable code, see the [`examples/`](./examples) directory.
 
 ```rust
 use axum_error_sets::{
