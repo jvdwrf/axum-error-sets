@@ -50,6 +50,14 @@
 //! ```rust,ignore
 #![doc = include_str!("../examples/03_axum_aide.rs")]
 //! ```
+//!
+//! ### Example 4: Axum Route Handlers & Utoipa OpenAPI Integration
+//!
+//! Demonstrates integrating error sets directly into Axum handlers to automatically generate OpenAPI metadata using Utoipa.
+//!
+//! ```rust,ignore
+#![doc = include_str!("../examples/04_axum_utoipa.rs")]
+//! ```
 
 use axum_core::response::Response;
 use http::StatusCode;
@@ -153,11 +161,20 @@ pub trait AideErrorSetValue: ErrorSetValue {
     ) -> aide::openapi::Response;
 }
 
+#[cfg(feature = "utoipa")]
+pub trait UtoipaErrorSetValue: ErrorSetValue {
+    /// Generates OpenAPI response specifications for a given status code.
+    fn response_for(status: StatusCode) -> utoipa::openapi::Response;
+}
+
 pub use api_error::*;
 mod api_error;
 
 #[cfg(feature = "aide")]
 mod aide_impls;
+
+#[cfg(feature = "utoipa")]
+mod utoipa_impls;
 
 pub mod code;
 

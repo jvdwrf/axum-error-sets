@@ -1,5 +1,5 @@
 use axum::response::{IntoResponse, Response};
-use axum_error_sets::{AideErrorSetValue, ErrorSet, ErrorSetValue};
+use axum_error_sets::{AideErrorSetValue, ErrorSet, ErrorSetValue, UtoipaErrorSetValue};
 use http::StatusCode;
 use rootcause::Report;
 
@@ -40,6 +40,12 @@ impl AideErrorSetValue for AppError {
             description: format!("Request failed with status {status}"),
             ..Default::default()
         }
+    }
+}
+
+impl UtoipaErrorSetValue for AppError {
+    fn response_for(status: StatusCode) -> utoipa::openapi::Response {
+        utoipa::openapi::Response::new(format!("Request failed with status {status}"))
     }
 }
 
