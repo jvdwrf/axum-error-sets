@@ -91,7 +91,7 @@ async fn create_user_handler(
 async fn main() {
     let mut api = OpenApi::default();
 
-    // ApiRouter automatically extracts openapi metadata from declared handler error sets via AideErrorSetValue
+    // ApiRouter automatically extracts openapi metadata from declared handler error sets via AideResponseFor
     let app = ApiRouter::<()>::new()
         .api_route(
             "/users/{id}",

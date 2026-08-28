@@ -28,14 +28,14 @@ impl<T: Into<Report>> From<T> for MyApiError {
     }
 }
 
-impl ErrorSetValue for MyApiError {
+impl IntoResponseWith for MyApiError {
     fn into_response_with(self, status: StatusCode) -> Response {
         let msg = self.msg.unwrap_or_else(|| "".to_string());
         (status, msg).into_response()
     }
 }
 
-impl AideErrorSetValue for MyApiError {
+impl AideResponseFor for MyApiError {
     type Inner = String;
 
     fn inferred_response_for(

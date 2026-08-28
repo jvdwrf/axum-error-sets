@@ -16,9 +16,9 @@ Instead of monolithic error enums or loosely-typed responses, functions declare 
 - **No Monolithic Error Enums:** Avoid constructing domain-wide error enums or per-function error types.
 - **Exact Error Contracts:** Functions declare precisely which HTTP status codes they can produce.
 - **Subset-to-Superset Promotion:** Error sets grow deterministically as they move up application layers via `.into_superset()`.
-- **Custom Response Formatting:** Implement `ErrorSetValue` to control how error values convert into Axum responses.
+- **Custom Response Formatting:** Implement `IntoResponseWith` to control how error values convert into Axum responses.
 - **Compile-Time Guarantees:** Returning undeclared status codes produces a compiler error.
-- **OpenAPI / Aide Support:** Implement `AideErrorSetValue` to automatically document status codes in OpenAPI specifications.
+- **OpenAPI / Aide Support:** Implement `AideResponseFor` to automatically document status codes in OpenAPI specifications.
 
 ---
 

@@ -2,7 +2,7 @@ use axum::{
     Json,
     response::{IntoResponse as _, Response},
 };
-use axum_error_sets::{AideErrorSetValue, ErrorSet, ErrorSetValue, StatusResultExt as _};
+use axum_error_sets::{AideResponseFor, ErrorSet, IntoResponseWith, StatusResultExt as _};
 use axum_error_sets::{
     ResultSetExt as _,
     code::{Conflict, InternalServerError, NotFound, Unauthorized},
@@ -38,14 +38,14 @@ impl<T: Into<Report>> From<T> for AppError {
     }
 }
 
-impl ErrorSetValue for AppError {
+impl IntoResponseWith for AppError {
     fn into_response_with(self, status: StatusCode) -> Response {
         let message = self.message.unwrap_or_default();
         (status, message).into_response()
     }
 }
 
-impl AideErrorSetValue for AppError {
+impl AideResponseFor for AppError {
     type Inner = String;
 
     fn inferred_response_for(

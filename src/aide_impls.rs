@@ -4,7 +4,7 @@ macro_rules! impl_operation_output {
     ($($error:ident),+ $(,)?) => {
         impl<R, $($error),+> aide::OperationOutput for ErrorSet<R, ($($error,)+)>
         where
-            R: AideErrorSetValue,
+            R: AideResponseFor,
             $($error: StatusWrapper),+
         {
             type Inner = R::Inner;
@@ -52,7 +52,7 @@ impl_operation_output!(E1, E2, E3, E4, E5, E6, E7, E8, E9, E10, E11, E12);
 
 impl<R> aide::OperationOutput for ErrorSet<R, ()>
 where
-    R: AideErrorSetValue,
+    R: AideResponseFor,
 {
     type Inner = R::Inner;
 

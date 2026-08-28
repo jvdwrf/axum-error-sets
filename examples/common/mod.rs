@@ -1,5 +1,5 @@
 use axum::response::{IntoResponse, Response};
-use axum_error_sets::{AideErrorSetValue, ErrorSet, ErrorSetValue, UtoipaErrorSetValue};
+use axum_error_sets::{AideResponseFor, ErrorSet, IntoResponseWith, UtoipaResponseFor};
 use http::StatusCode;
 use rootcause::Report;
 
@@ -22,13 +22,13 @@ impl<T: Into<Report>> From<T> for AppError {
     }
 }
 
-impl ErrorSetValue for AppError {
+impl IntoResponseWith for AppError {
     fn into_response_with(self, status: StatusCode) -> Response {
         (status, format!("{}", self.message)).into_response()
     }
 }
 
-impl AideErrorSetValue for AppError {
+impl AideResponseFor for AppError {
     type Inner = String;
 
     fn inferred_response_for(
@@ -43,7 +43,7 @@ impl AideErrorSetValue for AppError {
     }
 }
 
-impl UtoipaErrorSetValue for AppError {
+impl UtoipaResponseFor for AppError {
     fn response_for(status: StatusCode) -> utoipa::openapi::Response {
         utoipa::openapi::Response::new(format!("Request failed with status {status}"))
     }

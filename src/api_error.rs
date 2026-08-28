@@ -1,4 +1,4 @@
-use crate::{ErrorSetValue, StatusWrapper};
+use crate::{IntoResponseWith, StatusWrapper};
 use axum_core::response::{IntoResponse, Response};
 use http::StatusCode;
 use std::{fmt::Debug, hash::Hash, marker::PhantomData};
@@ -7,7 +7,7 @@ use type_sets::{Contains, SupersetOf};
 /// An error defined by a set of possible status codes.
 ///
 /// The parameter `T` is the actual value of the error, and must implement
-/// [`ErrorSetValue`].
+/// [`IntoResponseWith`].
 ///
 /// The parameter `E` is a type-level set of possible status codes that this error
 /// can have. e.g. `(NotFound, InternalServerError)` means that this error can either
@@ -91,7 +91,7 @@ impl<T, E> ErrorSet<T, E> {
     }
 }
 
-impl<T: ErrorSetValue, R> IntoResponse for ErrorSet<T, R> {
+impl<T: IntoResponseWith, R> IntoResponse for ErrorSet<T, R> {
     fn into_response(self) -> Response {
         self.value.into_response_with(self.code)
     }

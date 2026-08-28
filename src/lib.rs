@@ -13,11 +13,11 @@
 //! * **Exact Error Contracts:** Functions declare precisely which HTTP status codes they can produce in their return signature.
 //! * **Subset-to-Superset Promotion:** Error sets grow deterministically as they move up application layers
 //!   via `.into_superset()`. Lower-level code remains precise without restricting higher-level callers.
-//! * **Custom Response Formatting:** Implement [`ErrorSetValue`] on your central error payload type (e.g., `AppError` or `StringError`)
+//! * **Custom Response Formatting:** Implement [`IntoResponseWith`] on your central error payload type (e.g., `AppError` or `StringError`)
 //!   to completely control how Axum converts error values into [`IntoResponse`](axum::response::IntoResponse) for any given status code.
 //! * **Compile-Time Guarantees:** Returning an undeclared status code produces a compiler error. Callers cannot silently "forget"
 //!   or shrink handled error sets without explicit conversion.
-//! * **Aide & OpenAPI Integration:** Implement [`AideErrorSetValue`] to automatically generate precise OpenAPI metadata for every status code in an error set.
+//! * **Aide & OpenAPI Integration:** Implement [`AideResponseFor`] to automatically generate precise OpenAPI metadata for every status code in an error set.
 //!
 //! ---
 //!
@@ -92,7 +92,7 @@ pub trait StatusWrapper: Sized {
 }
 
 /// Should be implemented for a type to be used as `T` inside [`ApiError<T, _>`].
-pub trait ErrorSetValue {
+pub trait IntoResponseWith {
     /// Convert the value into an axum [`Response`] with the given status code.
     ///
     /// This method must make sure that the response is valid for the given status code,
@@ -101,13 +101,13 @@ pub trait ErrorSetValue {
     ///
     /// # Example
     /// ```rust
-    /// use axum_error_sets::{ErrorSetValue};
+    /// use axum_error_sets::{IntoResponseWith};
     /// use axum::response::{IntoResponse, Response};
     /// use http::StatusCode;
     ///
     /// struct MyErrorValue(String);
     ///
-    /// impl ErrorSetValue for MyErrorValue {
+    /// impl IntoResponseWith for MyErrorValue {
     ///     fn into_response_with(self, status: StatusCode) -> Response {
     ///         (status, self.0).into_response()
     ///    }
@@ -119,7 +119,7 @@ pub trait ErrorSetValue {
 /// Should be implemented for a type to be used as `T` inside [`ApiError<T, _>`], for
 /// usage with [`aide`].
 #[cfg(feature = "aide")]
-pub trait AideErrorSetValue: ErrorSetValue {
+pub trait AideResponseFor: IntoResponseWith {
     /// See [`aide::OperationOutput::Inner`].
     type Inner;
 
@@ -127,19 +127,19 @@ pub trait AideErrorSetValue: ErrorSetValue {
     ///
     /// # Example
     /// ```rust
-    /// use axum_error_sets::{ErrorSetValue, AideErrorSetValue};
+    /// use axum_error_sets::{IntoResponseWith, AideResponseFor};
     /// use axum::response::{IntoResponse, Response};
     /// use http::StatusCode;
     ///
     /// struct MyErrorValue(String);
     ///
-    /// impl ErrorSetValue for MyErrorValue {
+    /// impl IntoResponseWith for MyErrorValue {
     ///     fn into_response_with(self, status: StatusCode) -> Response {
     ///         (status, self.0).into_response()
     ///    }
     /// }
     ///
-    /// impl AideErrorSetValue for MyErrorValue {
+    /// impl AideResponseFor for MyErrorValue {
     ///     type Inner = String;
     ///
     ///     fn inferred_response_for(
@@ -162,7 +162,7 @@ pub trait AideErrorSetValue: ErrorSetValue {
 }
 
 #[cfg(feature = "utoipa")]
-pub trait UtoipaErrorSetValue: ErrorSetValue {
+pub trait UtoipaResponseFor: IntoResponseWith {
     /// Generates OpenAPI response specifications for a given status code.
     fn response_for(status: StatusCode) -> utoipa::openapi::Response;
 }
