@@ -52,7 +52,7 @@ fn update_user_profile(
     id: &str,
     token: &str,
     new_name: &str,
-) -> AppResultSet<String, (Unauthorized, Conflict, InternalServerError) NotFound,> {
+) -> AppResultSet<String, (Unauthorized, Conflict, InternalServerError) NotFound> {
     check_auth(token).into_superset()?;
     let mut username = fetch_user(id).into_superset()?;
 
