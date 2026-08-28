@@ -1,0 +1,30 @@
+[package]
+name = "axum-error-sets"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axum-core = "0.5"
+aide = { version = "0.15", optional = true }
+type-sets = "^0.1.1"
+http = "1"
+
+[dev-dependencies]
+axum = { version = "0.8", features = ["macros"] }
+axum-typed-routing = { version = "0.4", features = ["aide"] }
+rootcause = "0.13"
+axum-error-sets = { path = ".", features = ["aide"] }
+serde = { version = "1.0", features = ["derive"] }
+schemars = "0.9"
+aide = { version = "0.15", features = [
+    "axum-query",
+    "axum-json",
+    "axum-tokio",
+    "axum-form",
+    "macros",
+] }
+
+[features]
+default = []
+aide = ["dep:aide"]
+_ra = ["aide"]
