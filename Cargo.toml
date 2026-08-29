@@ -1,6 +1,6 @@
 [package]
 name = "axum-error-sets"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 keywords = ["axum", "error-handling", "type-sets", "openapi", "aide"]

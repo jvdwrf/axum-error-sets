@@ -9,7 +9,7 @@ macro_rules! define_codes {
     ) => {
         $(
             $(#[$meta])*
-            #[derive(Debug, Clone, Copy)]
+            #[derive(Debug, Clone, Copy, Default)]
             pub struct $name<T = ()>(pub T);
 
             impl<T, R, S> From<$name<R>> for ErrorSet<S, T>
