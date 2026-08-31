@@ -1,6 +1,6 @@
 [package]
 name = "axum-error-sets"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 keywords = ["axum", "error-handling", "type-sets", "openapi", "aide"]
@@ -15,10 +15,13 @@ axum-core = "0.5"
 type-sets = "^0.1.1"
 http = "1"
 aide = { version = "0.15", optional = true }
+schemars = { version = "0.9", optional = true }
 utoipa = { version = "5", optional = true }
+serde = { version = "1.0", features = ["derive"] }
+axum = { version = "0.8", features = ["json"] }
 
 [dev-dependencies]
-axum = { version = "0.8", features = ["macros"] }
+axum = { version = "0.8", features = ["macros", "json"] }
 axum-typed-routing = { version = "0.4", features = ["aide"] }
 rootcause = "0.13"
 axum-error-sets = { path = ".", features = ["aide", "utoipa"] }
@@ -37,7 +40,7 @@ serde_json = "1.0"
 
 [features]
 default = []
-aide = ["dep:aide"]
+aide = ["dep:aide", "dep:schemars"]
 utoipa = ["dep:utoipa"]
 _ra = ["aide", "utoipa"]
 
