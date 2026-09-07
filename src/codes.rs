@@ -1,3 +1,5 @@
+//! Defines all HTTP status code wrappers.
+
 use super::*;
 
 macro_rules! define_codes {
@@ -13,10 +15,10 @@ macro_rules! define_codes {
         #[derive(Debug, Clone, Copy, Default)]
         pub struct $name<T = ()>(pub T);
 
-        impl<T> WrapsResponse for $name<T> {
+        impl<T> StatusProvider for $name<T> {
             const STATUS_CODE: StatusCode = $status;
             type Inner = T;
-            type Pure = $name;
+            type WithInner<R> = $name<R>;
             fn into_inner(self) -> Self::Inner {
                 self.0
             }
@@ -25,7 +27,7 @@ macro_rules! define_codes {
         impl<T, S> From<$name<T>> for ApiResponse<S>
         where
             S: Contains<$name<T>>,
-            $name<T>: WrapsResponse<Inner: IntoResponse>,
+            $name<T>: StatusProvider<Inner: IntoResponse>,
         {
             fn from(err: $name<T>) -> Self {
                 ApiResponse::new(err)
@@ -52,191 +54,167 @@ macro_rules! define_codes {
             }
         }
     )*
-
-    pub trait ApiResultExt<T, E> {
-        $(
-            $(
-                fn $fn_name<R>(self) -> Result<T, $name<R>>
-                where
-                    E: Into<R>;
-            )?
-        )*
-    }
-
-    impl<T, E> ApiResultExt<T, E> for Result<T, E> {
-        $(
-            $(
-                fn $fn_name<R>(self) -> Result<T, $name<R>>
-                where
-                    E: Into<R>,
-                {
-                    match self {
-                        Ok(val) => Ok(val),
-                        Err(e) => Err($name(e.into())),
-                    }
-                }
-            )?
-        )*
-    }
 };
 }
 
 define_codes!(
     /// 400 Bad Request
-    fn bad_request();
+    fn map_bad_request();
     code BadRequest => StatusCode::BAD_REQUEST;
 
     /// 401 Unauthorized
-    fn unauthorized_err();
+    fn map_unauthorized();
     code Unauthorized => StatusCode::UNAUTHORIZED;
 
     /// 402 Payment Required
-    fn payment_required_err();
+    fn map_payment_required();
     code PaymentRequired => StatusCode::PAYMENT_REQUIRED;
 
     /// 403 Forbidden
-    fn forbidden_err();
+    fn map_forbidden();
     code Forbidden => StatusCode::FORBIDDEN;
 
     /// 404 Not Found
-    fn not_found_err();
+    fn map_not_found();
     code NotFound => StatusCode::NOT_FOUND;
 
     /// 405 Method Not Allowed
-    fn method_not_allowed_err();
+    fn map_method_not_allowed();
     code MethodNotAllowed => StatusCode::METHOD_NOT_ALLOWED;
 
     /// 406 Not Acceptable
-    fn not_acceptable_err();
+    fn map_not_acceptable();
     code NotAcceptable => StatusCode::NOT_ACCEPTABLE;
 
     /// 407 Proxy Authentication Required
-    fn proxy_authentication_required_err();
+    fn map_proxy_authentication_required();
     code ProxyAuthenticationRequired => StatusCode::PROXY_AUTHENTICATION_REQUIRED;
 
     /// 408 Request Timeout
-    fn request_timeout_err();
+    fn map_request_timeout();
     code RequestTimeout => StatusCode::REQUEST_TIMEOUT;
 
     /// 409 Conflict
-    fn conflict_err();
+    fn map_conflict();
     code Conflict => StatusCode::CONFLICT;
 
     /// 410 Gone
-    fn gone_err();
+    fn map_gone();
     code Gone => StatusCode::GONE;
 
     /// 411 Length Required
-    fn length_required_err();
+    fn map_length_required();
     code LengthRequired => StatusCode::LENGTH_REQUIRED;
 
     /// 412 Precondition Failed
-    fn precondition_failed_err();
+    fn map_precondition_failed();
     code PreconditionFailed => StatusCode::PRECONDITION_FAILED;
 
-    // /// 413 Content Too Large
-    // code ContentTooLarge => StatusCode::CONTENT_TOO_LARGE;
+    /// 413 Payload Too Large
+    fn map_payload_too_large();
+    code PayloadTooLarge => StatusCode::PAYLOAD_TOO_LARGE;
 
     /// 414 URI Too Long
-    fn uri_too_long_err();
+    fn map_uri_too_long();
     code UriTooLong => StatusCode::URI_TOO_LONG;
 
     /// 415 Unsupported Media Type
-    fn unsupported_media_type_err();
+    fn map_unsupported_media_type();
     code UnsupportedMediaType => StatusCode::UNSUPPORTED_MEDIA_TYPE;
 
     /// 416 Range Not Satisfiable
-    fn range_not_satisfiable_err();
+    fn map_range_not_satisfiable();
     code RangeNotSatisfiable => StatusCode::RANGE_NOT_SATISFIABLE;
 
     /// 417 Expectation Failed
-    fn expectation_failed_err();
+    fn map_expectation_failed();
     code ExpectationFailed => StatusCode::EXPECTATION_FAILED;
 
     /// 418 I'm a teapot
-    fn im_a_teapot_err();
+    fn map_im_a_teapot();
     code ImATeapot => StatusCode::IM_A_TEAPOT;
 
     /// 421 Misdirected Request
-    fn misdirected_request_err();
+    fn map_misdirected_request();
     code MisdirectedRequest => StatusCode::MISDIRECTED_REQUEST;
 
     /// 422 Unprocessable Entity
-    fn unprocessable_entity_err();
+    fn map_unprocessable_entity();
     code UnprocessableEntity => StatusCode::UNPROCESSABLE_ENTITY;
 
     /// 423 Locked
-    fn locked_err();
+    fn map_locked();
     code Locked => StatusCode::LOCKED;
 
     /// 424 Failed Dependency
-    fn failed_dependency_err();
+    fn map_failed_dependency();
     code FailedDependency => StatusCode::FAILED_DEPENDENCY;
 
-    // /// 425 Too Early
-    // code TooEarly => StatusCode::TOO_EARLY;
+    /// 425 Too Early
+    fn map_too_early();
+    code TooEarly => StatusCode::TOO_EARLY;
 
     /// 426 Upgrade Required
-    fn upgrade_required_err();
+    fn map_upgrade_required();
     code UpgradeRequired => StatusCode::UPGRADE_REQUIRED;
 
     /// 428 Precondition Required
-    fn precondition_required_err();
+    fn map_precondition_required();
     code PreconditionRequired => StatusCode::PRECONDITION_REQUIRED;
 
     /// 429 Too Many Requests
-    fn too_many_requests_err();
+    fn map_too_many_requests();
     code TooManyRequests => StatusCode::TOO_MANY_REQUESTS;
 
     /// 431 Request Header Fields Too Large
-    fn request_header_fields_too_large_err();
+    fn map_request_header_fields_too_large();
     code RequestHeaderFieldsTooLarge => StatusCode::REQUEST_HEADER_FIELDS_TOO_LARGE;
 
     /// 451 Unavailable For Legal Reasons
-    fn unavailable_for_legal_reasons_err();
+    fn map_unavailable_for_legal_reasons();
     code UnavailableForLegalReasons => StatusCode::UNAVAILABLE_FOR_LEGAL_REASONS;
 
     /// 500 Internal Server Error
-    fn internal_err();
-    code InternalServerError => StatusCode::INTERNAL_SERVER_ERROR;
+    fn map_internal();
+    code Internal => StatusCode::INTERNAL_SERVER_ERROR;
 
     /// 501 Not Implemented
-    fn not_implemented_err();
+    fn map_not_implemented();
     code NotImplemented => StatusCode::NOT_IMPLEMENTED;
 
     /// 502 Bad Gateway
-    fn bad_gateway_err();
+    fn map_bad_gateway();
     code BadGateway => StatusCode::BAD_GATEWAY;
 
     /// 503 Service Unavailable
-    fn service_unavailable_err();
+    fn map_service_unavailable();
     code ServiceUnavailable => StatusCode::SERVICE_UNAVAILABLE;
 
     /// 504 Gateway Timeout
-    fn gateway_timeout_err();
+    fn map_gateway_timeout();
     code GatewayTimeout => StatusCode::GATEWAY_TIMEOUT;
 
     /// 505 HTTP Version Not Supported
-    fn http_version_not_supported_err();
+    fn map_http_version_not_supported();
     code HttpVersionNotSupported => StatusCode::HTTP_VERSION_NOT_SUPPORTED;
 
     /// 506 Variant Also Negotiates
-    fn variant_also_negotiates_err();
+    fn map_variant_also_negotiates();
     code VariantAlsoNegotiates => StatusCode::VARIANT_ALSO_NEGOTIATES;
 
     /// 507 Insufficient Storage
-    fn insufficient_storage_err();
+    fn map_insufficient_storage();
     code InsufficientStorage => StatusCode::INSUFFICIENT_STORAGE;
 
     /// 508 Loop Detected
-    fn loop_detected_err();
+    fn map_loop_detected();
     code LoopDetected => StatusCode::LOOP_DETECTED;
 
     /// 510 Not Extended
-    fn not_extended_err();
+    fn map_not_extended();
     code NotExtended => StatusCode::NOT_EXTENDED;
 
     /// 511 Network Authentication Required
-    fn network_authentication_required_err();
+    fn map_network_authentication_required();
     code NetworkAuthenticationRequired => StatusCode::NETWORK_AUTHENTICATION_REQUIRED;
 );

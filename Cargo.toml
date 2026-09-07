@@ -12,7 +12,7 @@ readme = "README.md"
 
 [dependencies]
 axum-core = "0.5"
-type-sets = "^0.1.1"
+type-sets = "0.2"
 http = "1"
 aide = { version = "0.15", optional = true }
 schemars = { version = "0.9", optional = true }

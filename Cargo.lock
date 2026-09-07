@@ -959,9 +959,9 @@ checksum = "b40688ea6389c8171614b25491f71d4a27946e0c7ce2da1c6de27e25abf1a0ae"
 
 [[package]]
 name = "type-sets"
-version = "0.1.1"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f058f7bf668b3eff13f025246bf54bf114dac367a4451c4b6c88ab134508e9ca"
+checksum = "4a904f7798566a40209c95a2d9953dfaad5993db12f7e8a495b00b3428009035"
 
 [[package]]
 name = "unicode-ident"
