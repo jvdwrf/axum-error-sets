@@ -1,6 +1,6 @@
 [package]
 name = "axum-error-sets"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 keywords = ["axum", "error-handling", "type-sets", "openapi", "aide"]
@@ -16,7 +16,7 @@ type-sets = "0.2"
 http = "1"
 aide = { version = "0.15", optional = true }
 schemars = { version = "0.9", optional = true }
-utoipa = { version = "5", optional = true }
+# utoipa = { version = "5", optional = true }
 serde = { version = "1.0", features = ["derive"] }
 axum = { version = "0.8", features = ["json"] }
 
@@ -24,7 +24,7 @@ axum = { version = "0.8", features = ["json"] }
 axum = { version = "0.8", features = ["macros", "json"] }
 axum-typed-routing = { version = "0.4", features = ["aide"] }
 rootcause = "0.13"
-axum-error-sets = { path = ".", features = ["aide", "utoipa"] }
+axum-error-sets = { path = ".", features = ["aide"] }
 serde = { version = "1.0", features = ["derive"] }
 schemars = "0.9"
 aide = { version = "0.15", features = [
@@ -34,15 +34,16 @@ aide = { version = "0.15", features = [
     "axum-form",
     "macros",
 ] }
-utoipa = { version = "5", features = ["axum_extras"] }
+# utoipa = { version = "5", features = ["axum_extras"] }
 tokio = { version = "1", features = ["full"] }
 serde_json = "1.0"
+# utoipa-axum = "0.2"
 
 [features]
 default = []
 aide = ["dep:aide", "dep:schemars"]
-utoipa = ["dep:utoipa"]
-_ra = ["aide", "utoipa"]
+# utoipa = ["dep:utoipa"]
+_ra = ["aide"]
 
 [package.metadata.docs.rs]
 all-features = true

@@ -1,3 +1,12 @@
+//! Typed, composable HTTP error sets for Axum.
+//!
+//! # Overview
+//! - All status-codes are defined in [`codes`].
+//! - [`ApiResponse`] can be used as the return/error type in an `axum` handlers.
+//! - [`ApiResponse<Tuple>`] can be used to specify multiple type-safe response types for an `axum` handler.
+//! - Provides convenient methods for error propagation through [`ResultStatusExt`].
+//! - Supports automatic openapi generation through [`aide`] or [`utoipa`].
+
 use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
@@ -22,6 +31,9 @@ pub type ApiResult<T, S> = Result<T, ApiResponse<S>>;
 /// `ApiResponse<S>` implements `From<T>` for any `T` [contained](`type_sets::Contains`)
 /// in the set `S`, allowing for easy error propagation.
 /// See [`ResultStatusExt`] for convenient methods to help with error propagation.
+///
+/// Be aware that [`IntoResponse`] is called whenever this type is constructed, **not**
+/// when it is returned by the handler. This behaviour differs from standard `axum`.
 ///
 /// Normally, this type is used as `Result<T, ApiResponse<S>>` (or the type-alias [`ApiResult`]). It can also be used itself as a direct return type from an `axum` handler.
 ///
@@ -125,37 +137,49 @@ macro_rules! utoipa_aide_impls {
             }
         )+
 
-        $(
-            #[allow(unused)]
-            #[cfg(feature = "utoipa")]
-            impl<$($E),*> utoipa::IntoResponses for ApiResponse<($($E,)*)>
-            where
-                $(
-                    $E: StatusProvider<Inner: utoipa::IntoResponses>,
-                )*
-            {
-                fn responses() -> std::collections::BTreeMap<
-                    String,
-                    utoipa::openapi::RefOr<utoipa::openapi::Response>,
-                > {
-                    let mut responses = std::collections::BTreeMap::new();
+        // $(
+        //     #[allow(unused)]
+        //     #[cfg(feature = "utoipa")]
+        //     impl<$($E),*> utoipa::IntoResponses for ApiResponse<($($E,)*)>
+        //     where
+        //         $(
+        //             $E: StatusProvider<Inner: utoipa::ToSchema>,
+        //         )*
+        //     {
+        //         fn responses() -> std::collections::BTreeMap<
+        //             String,
+        //             utoipa::openapi::RefOr<utoipa::openapi::Response>,
+        //         > {
+        //             let mut responses = utoipa::openapi::ResponsesBuilder::new();
 
-                    $(
-                        let inner_responses =
-                            <$E::Inner as utoipa::IntoResponses>::responses();
+        //             $({
+        //                 let name = < $E::Inner as utoipa::ToSchema >::name();
+        //                 let schema = < $E::Inner as utoipa::PartialSchema >::schema();
+        //                 let content = utoipa::openapi::ContentBuilder::new()
+        //                     .schema(Some(schema))
+        //                     .build();
 
-                        if let Some((_, response)) = inner_responses.into_iter().next() {
-                            responses.insert(
-                                $E::STATUS_CODE.as_u16().to_string(),
-                                response,
-                            );
-                        }
-                    )*
+        //                 responses = responses.response(
+        //                     $E::STATUS_CODE.as_u16().to_string(),
+        //                     utoipa::openapi::response::ResponseBuilder::new()
+        //                         .description(format!(
+        //                             "{} response for {}",
+        //                             $E::STATUS_CODE.as_u16(),
+        //                             name
+        //                         ))
+        //                         .content(
+        //                             "application/json",
+        //                             content
+        //                         )
+        //                         .build()
+        //                 );
 
-                    responses
-                }
-            }
-        )+
+        //             })*
+
+        //             responses.build().responses
+        //         }
+        //     }
+        // )+
     };
 }
 

@@ -1,16 +1,26 @@
+use axum::Json;
 use axum_error_sets::{
     ApiResult, ApiResultExt, ResultStatusExt as _,
     codes::{BadRequest, Forbidden, Internal},
 };
 
-fn main() {}
-
-fn test() -> ApiResult<(), (BadRequest<String>, Internal<String>, Forbidden<String>)> {
+fn main() -> ApiResult<
+    (),
+    (
+        BadRequest<String>,
+        Internal<Json<String>>,
+        Forbidden<String>,
+    ),
+> {
     perform_action().with_status::<BadRequest>()?;
     perform_action2().into_status::<BadRequest, _>()?;
 
-    perform_action().with_status::<Internal>()?;
-    perform_action2().into_status::<Internal, _>()?;
+    perform_action()
+        .with_status::<Internal>()
+        .map_status(Json)?;
+    perform_action2()
+        .with_status::<Internal>()
+        .map_status(|s| Json(s.to_string()))?;
 
     perform_action3()?;
 
@@ -30,13 +40,13 @@ fn perform_action2() -> Result<(), &'static str> {
 }
 
 fn perform_action3() -> Result<(), Forbidden<String>> {
-    Err(Forbidden("error".into()))
+    Ok(())
 }
 
-fn perform_action4() -> Result<(), Forbidden<String>> {
-    Err(Forbidden("error".into()))
+fn perform_action4() -> Result<(), Forbidden<Json<String>>> {
+    Ok(())
 }
 
-fn perform_actions() -> ApiResult<(), (BadRequest<String>, Internal<String>)> {
+fn perform_actions() -> ApiResult<(), (BadRequest<String>, Internal<Json<String>>)> {
     Ok(())
 }
