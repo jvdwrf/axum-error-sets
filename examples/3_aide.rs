@@ -17,7 +17,7 @@ fn main() {
         .api_route("/", post(handler))
         .finish_api(&mut api);
 
-    println!("{:#?}", api);
+    println!("{}", serde_json::to_string_pretty(&api).unwrap());
 }
 
 async fn handler() -> ApiResult<

@@ -1,6 +1,6 @@
 [package]
 name = "axum-error-sets"
-version = "0.4.0"
+version = "0.4.1"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 keywords = ["axum", "error-handling", "type-sets", "openapi", "aide"]
@@ -23,7 +23,6 @@ axum = { version = "0.8", features = ["json"] }
 [dev-dependencies]
 axum = { version = "0.8", features = ["macros", "json"] }
 axum-typed-routing = { version = "0.4", features = ["aide"] }
-rootcause = "0.13"
 axum-error-sets = { path = ".", features = ["aide"] }
 serde = { version = "1.0", features = ["derive"] }
 schemars = "0.9"

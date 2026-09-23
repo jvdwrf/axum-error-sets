@@ -1,4 +1,12 @@
-//! Defines all HTTP status code wrappers.
+//! Wrapper types for every 4xx and 5xx HTTP status code.
+//!
+//! Each type is a tuple struct `Code<T = ()>(pub T)`. The wrapped `T` is the response body and
+//! must implement [`IntoResponse`] to be used in an [`ApiResponse`]. For example:
+//! - `NotFound` (that is, `NotFound<()>`) is a 404 with an empty body.
+//! - `NotFound<String>` is a 404 with a plain-text body.
+//! - `NotFound<Json<MyError>>` is a 404 with a JSON body.
+//!
+//! Every type implements [`StatusProvider`], `From<T>`, and `Deref`/`DerefMut` to `T`.
 
 use super::*;
 

@@ -5,62 +5,77 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE-MIT)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE-APACHE)
 
-Typed, composable HTTP error sets for [Axum](https://github.com/tokio-rs/axum), with OpenAPI generation through [Aide](https://github.com/tamasfe/aide) or [Utoipa](https://github.com/juhaku/utoipa)
+Typed, composable HTTP error sets for [axum](https://github.com/tokio-rs/axum), with OpenAPI generation through [aide](https://github.com/tamasfe/aide).
 
-Instead of monolithic error enums or loosely-typed responses, functions declare the exact set of HTTP status codes they can return using type-level tuple sets (e.g., `(NotFound, Unauthorized)`), powered by [`type-sets`](https://docs.rs/type-sets/).
-
----
+Instead of one large error enum per application, each function lists the exact HTTP status codes it can return, as a tuple in its return type, such as `ApiResult<T, (Unauthorized, NotFound<String>)>`. The sets are built on [`type-sets`](https://docs.rs/type-sets/).
 
 ## Features
 
-- **No Monolithic Error Enums:** Avoid constructing domain-wide error enums or per-function error types.
-- **Exact Error Contracts:** Functions declare precisely which HTTP status codes they can produce.
-- **Subset-to-Superset Promotion:** Error sets grow deterministically as they move up application layers via `.into_superset()`.
-- **Custom Response Formatting:** Implement `IntoResponseWith` to control how error values convert into Axum responses.
-- **Compile-Time Guarantees:** Returning undeclared status codes produces a compiler error.
-- **OpenAPI / Aide Support:** Implement `AideResponseFor` to automatically document status codes in OpenAPI specifications.
+- **Exact error contracts:** each function declares which status codes it can return. Returning any other code is a compile error.
+- **Every status code:** there is a wrapper type for every 4xx and 5xx code, with any `IntoResponse` type as the body: `NotFound`, `NotFound<String>`, `NotFound<Json<MyError>>`.
+- **`?` just works:** status codes convert into any error set that contains them, and small sets grow into larger ones with `.into_superset()`.
+- **Error wrapping helpers:** `.with_status::<BadRequest>()`, `.into_status::<..>()`, `.change_status::<..>()` and `.map_status(..)` on any `Result`.
+- **OpenAPI support:** with the `aide` feature, every status code in a handler's set is documented in the generated OpenAPI spec.
 
----
+## Installation
 
-## Quick Example
+```toml
+[dependencies]
+axum-error-sets = "0.4"
 
-For complete, runnable code, see the [`examples/`](./examples) directory.
+# For OpenAPI generation with aide:
+axum-error-sets = { version = "0.4", features = ["aide"] }
+```
+
+## Example
 
 ```rust
+use axum::Json;
 use axum_error_sets::{
-    ApiResultExt, StatusResultExt,
-    code::{Conflict, InternalServerError, NotFound, Unauthorized},
+    ApiResult, ApiResultExt as _, ResultStatusExt as _,
+    codes::{Internal, NotFound, Unauthorized},
 };
-use common::{AppResultSet, StringError};
 
-fn fetch_user(id: &str) -> AppResultSet<String, (NotFound,)> {
-    if id != "valid_id" {
-        return Err(StringError::new("user record not found")).into_not_found();
-    }
-    Ok(String::from("Alice"))
-}
-
-fn check_auth(token: &str) -> AppResultSet<(), (Unauthorized,)> {
+fn check_token(token: &str) -> Result<(), Unauthorized> {
     if token.is_empty() {
-        return Err(StringError::new("missing auth token")).into_unauthorized();
+        return Err(Unauthorized(()));
     }
     Ok(())
 }
 
-// Low-level error sets expand into a larger contract via `.into_superset()`
-fn update_user_profile(
-    id: &str,
-    token: &str,
-    new_name: &str,
-) -> AppResultSet<String, (Unauthorized, Conflict, InternalServerError, NotFound)> {
-    check_auth(token).into_superset()?;
-    let mut username = fetch_user(id).into_superset()?;
-
-    if new_name == "taken_username" {
-        return Err(StringError::new("username taken")).into_conflict()?;
-    }
-
-    username.push_str(" -> ");
-    username.push_str(new_name);
-    Ok(username)
+fn find_user(id: u32) -> ApiResult<String, (NotFound<String>,)> {
+    let name = lookup(id)
+        .ok_or("no such user")
+        .into_status::<NotFound, String>()?; // `&str` error -> `NotFound<String>`
+    Ok(name)
 }
+
+async fn get_user(
+    token: String,
+    id: u32,
+) -> ApiResult<Json<String>, (Unauthorized, NotFound<String>, Internal<String>)> {
+    check_token(&token)?;                        // `Unauthorized` is in the set
+    let name = find_user(id).into_superset()?;   // `(NotFound<String>,)` is a subset
+    let name = normalize(name).with_status::<Internal>()?; // `String` error -> `Internal<String>`
+    Ok(Json(name))
+}
+```
+
+The [`examples`](./examples) directory has runnable examples, including handlers, aide integration, and use with axum-typed-routing.
+
+## Pairs well with axum-typed-routing
+
+[axum-typed-routing](https://github.com/jvdwrf/axum-typed-routing) lets you declare a route's path and parameters next to its handler, checked at compile time. Combined with its `api_route` macro, a handler's error set appears in the OpenAPI documentation with no extra annotations:
+
+```rust
+#[api_route(GET "/item/{id}")]
+async fn get_item(id: u32) -> ApiResult<Json<Item>, (Unauthorized, NotFound<String>)> {
+    // ...
+}
+```
+
+See [`examples/5_typed_routing.rs`](./examples/5_typed_routing.rs).
+
+## License
+
+Licensed under either of [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE), at your option.
